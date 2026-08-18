@@ -1,0 +1,35 @@
+-- Run this script in Supabase Dashboard → SQL Editor.
+create extension if not exists pgcrypto;
+
+create table if not exists public.applications (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  name text not null,
+  phone text not null,
+  from_address text not null,
+  to_address text not null,
+  moving_date date not null,
+  volume text,
+  comment text,
+  status text not null default 'new' check (status in ('new', 'contacted', 'in_progress', 'completed', 'cancelled'))
+);
+
+alter table public.applications enable row level security;
+
+-- Visitors may create an application but can never read or alter one.
+create policy "Visitors can create applications"
+on public.applications for insert
+to anon
+with check (status = 'new');
+
+-- Authenticated Supabase users are administrators for this small internal app.
+create policy "Authenticated users can read applications"
+on public.applications for select
+to authenticated
+using (true);
+
+create policy "Authenticated users can update applications"
+on public.applications for update
+to authenticated
+using (true)
+with check (status in ('new', 'contacted', 'in_progress', 'completed', 'cancelled'));
