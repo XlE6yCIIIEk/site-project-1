@@ -51,6 +51,7 @@ Deno.serve(async request => {
   if (value(body.website)) return json({ ok: true }, 200, origin)
 
   const name = value(body.name), fromAddress = value(body.from_address), toAddress = value(body.to_address), movingDate = value(body.moving_date), volume = value(body.volume), comment = value(body.comment)
+  if (body.privacy_consent !== true) return json({ error: 'Для отправки заявки необходимо согласие на обработку данных.' }, 400, origin)
   let phone = value(body.phone).replace(/\D/g, '')
   if (phone.length === 11 && phone.startsWith('8')) phone = `7${phone.slice(1)}`
   if (name.length < 2 || name.length > 80 || !/^7\d{10}$/.test(phone) || fromAddress.length < 3 || fromAddress.length > 200 || toAddress.length < 3 || toAddress.length > 200 || !/^\d{4}-\d{2}-\d{2}$/.test(movingDate) || (volume && !volumes.has(volume)) || comment.length > 1500) return json({ error: 'Проверьте заполнение полей.' }, 400, origin)
@@ -66,7 +67,7 @@ Deno.serve(async request => {
     const { data: allowed, error } = await supabase.rpc('consume_application_rate_limit', { p_bucket: await hash(bucket), p_max: 5, p_window_seconds: 900 })
     if (error || !allowed) return json({ error: 'Слишком много попыток. Попробуйте позднее.' }, 429, origin)
   }
-  const { data: application, error } = await supabase.from('applications').insert({ name, phone: `+${phone}`, from_address: fromAddress, to_address: toAddress, moving_date: movingDate, volume: volume || null, comment: comment || null, status: 'new' }).select('order_number, name, phone, from_address, to_address, moving_date, volume, comment').single()
+  const { data: application, error } = await supabase.from('applications').insert({ name, phone: `+${phone}`, from_address: fromAddress, to_address: toAddress, moving_date: movingDate, volume: volume || null, comment: comment || null, privacy_consent_at: new Date().toISOString(), privacy_consent_version: 'privacy-v1', status: 'new' }).select('order_number, name, phone, from_address, to_address, moving_date, volume, comment').single()
   if (error || !application) return json({ error: 'Не удалось отправить заявку.' }, 500, origin)
   const notificationSent = await notifyManager(application)
   return json({ ok: true, order_number: application.order_number, notification_sent: notificationSent }, 201, origin)

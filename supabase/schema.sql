@@ -13,6 +13,8 @@ create table if not exists public.applications (
   moving_date date not null,
   volume text,
   comment text,
+  privacy_consent_at timestamptz not null default now(),
+  privacy_consent_version text not null default 'privacy-v1',
   status text not null default 'new' check (status in ('new', 'contacted', 'in_progress', 'completed', 'cancelled'))
 );
 
