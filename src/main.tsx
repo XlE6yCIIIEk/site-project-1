@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 import { AdminApp } from './admin'
 import { supabase } from './lib/supabase'
+
+declare global { interface Window { turnstile?: { render: (container: HTMLElement, options: { sitekey: string; callback: (token: string) => void; 'error-callback': () => void; 'expired-callback': () => void }) => string; reset: (id?: string) => void } } }
 
 const WHATSAPP_NUMBER = '77077731752'
 const WHATSAPP_MESSAGE = 'Здравствуйте! Хочу переехать и обсудить с вами все детали.'
@@ -113,26 +115,48 @@ function Navbar() {
   }
   return <header className={scrolled ? 'nav is-scrolled' : 'nav'}><div className="nav-inner"><a className="brand" href="#top" onClick={event => handleNavigation(event, 'top')}><span>Ирина Лян</span><small>ПЕРЕЕЗД ПОД КЛЮЧ</small></a><nav className={open ? 'nav-links is-open' : 'nav-links'}>{nav.map(([label,id]) => <a className={activeId === id ? 'is-active' : ''} key={id} href={`#${id}`} onClick={event => handleNavigation(event, id)}>{label}</a>)}</nav><a className="wa-nav" href={whatsappUrl} target="_blank" rel="noreferrer"><Icon name="whatsapp" size={18}/><span>WhatsApp</span></a><button className="menu" aria-label={open ? 'Закрыть меню' : 'Открыть меню'} aria-expanded={open} onClick={() => setOpen(!open)}><Icon name={open ? 'close' : 'menu'}/></button></div></header> }
 
+function Turnstile({ onToken, onError }: { onToken: (token: string) => void; onError: () => void }) {
+  const element = useRef<HTMLDivElement>(null)
+  const widgetId = useRef<string | undefined>(undefined)
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY
+  useEffect(() => {
+    if (!siteKey) { onError(); return }
+    const render = () => { if (element.current && window.turnstile && !widgetId.current) widgetId.current = window.turnstile.render(element.current, { sitekey: siteKey, callback: onToken, 'error-callback': onError, 'expired-callback': () => onToken('') }) }
+    if (window.turnstile) render()
+    else {
+      const script = document.querySelector<HTMLScriptElement>('script[data-turnstile]') ?? document.createElement('script')
+      if (!script.dataset.turnstile) { script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; script.async = true; script.defer = true; script.dataset.turnstile = 'true'; document.head.appendChild(script) }
+      script.addEventListener('load', render, { once: true })
+      script.addEventListener('error', onError, { once: true })
+    }
+  }, [onError, onToken, siteKey])
+  return <div className="turnstile" ref={element}/>
+}
+
 function LeadForm() {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [token, setToken] = useState('')
+  const [captchaError, setCaptchaError] = useState(false)
+  const onToken = useCallback((value: string) => { setToken(value); setCaptchaError(false) }, [])
+  const onCaptchaError = useCallback(() => setCaptchaError(true), [])
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (state === 'loading') return
     const form = new FormData(event.currentTarget)
     if (form.get('website')) { setState('success'); return }
-    if (!supabase) { setState('error'); return }
+    if (!supabase || !token) { setState('error'); return }
     setState('loading')
-    const { error } = await supabase.from('applications').insert({
+    const { error } = await supabase.functions.invoke('submit-application', { body: {
       name: String(form.get('name') ?? '').trim(), phone: String(form.get('phone') ?? '').trim(),
       from_address: String(form.get('from_address') ?? '').trim(), to_address: String(form.get('to_address') ?? '').trim(),
       moving_date: String(form.get('moving_date') ?? ''), volume: String(form.get('volume') ?? '') || null,
-      comment: String(form.get('comment') ?? '').trim() || null, status: 'new'
-    })
-    if (error) { if (import.meta.env.DEV) console.error('Application submission failed', error); setState('error'); return }
+      comment: String(form.get('comment') ?? '').trim() || null, website: String(form.get('website') ?? ''), turnstile_token: token,
+    } })
+    if (error) { if (import.meta.env.DEV) console.error('Application submission failed', error); window.turnstile?.reset(); setToken(''); setState('error'); return }
     setState('success')
   }
   if (state === 'success') return <div className="form-success"><Icon name="check" size={32}/><strong>Спасибо!</strong><p>Заявка отправлена. Мы свяжемся с вами, чтобы уточнить детали переезда.</p></div>
-  return <form className="lead-form" onSubmit={submit}><div className="form-grid"><label>Имя<input name="name" required placeholder="Ваше имя" /></label><label>Телефон<input name="phone" required type="tel" placeholder="+7 (___) ___-__-__" /></label><label>Откуда переезжаем<input name="from_address" required placeholder="Район или адрес" /></label><label>Куда переезжаем<input name="to_address" required placeholder="Район или адрес" /></label><label>Дата переезда<input name="moving_date" required type="date" /></label><label>Объём вещей<select name="volume" defaultValue=""><option value="" disabled>Выберите объём</option><option>Небольшой</option><option>Средний</option><option>Большой</option></select></label><label className="wide">Дополнительная информация<textarea name="comment" placeholder="Расскажите немного о вашем переезде" rows={3}/></label></div><input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" /><button className="button gold submit" type="submit" disabled={state === 'loading'}>{state === 'loading' ? 'Отправляем…' : <>Рассчитать стоимость <Icon name="arrow" size={18}/></>}</button>{state === 'error' && <p className="form-error">Не удалось отправить заявку. Попробуйте ещё раз или свяжитесь с нами в WhatsApp.</p>}</form>
+  return <form className="lead-form" onSubmit={submit}><div className="form-grid"><label>Имя<input name="name" required placeholder="Ваше имя" /></label><label>Телефон<input name="phone" required type="tel" placeholder="+7 (___) ___-__-__" /></label><label>Откуда переезжаем<input name="from_address" required placeholder="Район или адрес" /></label><label>Куда переезжаем<input name="to_address" required placeholder="Район или адрес" /></label><label>Дата переезда<input name="moving_date" required type="date" /></label><label>Объём вещей<select name="volume" defaultValue=""><option value="" disabled>Выберите объём</option><option>Небольшой</option><option>Средний</option><option>Большой</option></select></label><label className="wide">Дополнительная информация<textarea name="comment" placeholder="Расскажите немного о вашем переезде" rows={3}/></label></div><input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" /><Turnstile onToken={onToken} onError={onCaptchaError}/><button className="button gold submit" type="submit" disabled={state === 'loading' || !token}>{state === 'loading' ? 'Отправляем…' : <>Рассчитать стоимость <Icon name="arrow" size={18}/></>}</button>{(state === 'error' || captchaError) && <p className="form-error">Не удалось подтвердить или отправить заявку. Попробуйте ещё раз или напишите нам в WhatsApp.</p>}</form>
 }
 
 function Rating() { return <div className="rating" aria-label="Рейтинг 5 из 5">{Array.from({ length: 5 }, (_, index) => <Icon key={index} name="star" size={14}/>)}</div> }
