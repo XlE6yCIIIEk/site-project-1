@@ -10,7 +10,10 @@ const WHATSAPP_NUMBER = '77077731752'
 const WHATSAPP_MESSAGE = 'Здравствуйте! Хочу переехать и обсудить с вами все детали.'
 const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
 const INSTAGRAM_URL = 'https://www.instagram.com/poryadok_s_irinoi/'
-const serviceImages = ['/images/organized-home.jpg', '/images/hero-moving.jpg', '/images/calm-home.jpg']
+const serviceImages = [
+  '/images/service-declutter.jpg', '/images/service-sorting.jpg', '/images/service-packing.jpg', '/images/service-disassembly.jpg',
+  '/images/service-transport.jpg', '/images/service-assembly.jpg', '/images/service-unpacking.jpg', '/images/service-organization.jpg',
+]
 
 type IconName = 'box' | 'spark' | 'truck' | 'chair' | 'heart' | 'clock' | 'home' | 'layers' | 'arrow' | 'check' | 'menu' | 'close' | 'whatsapp' | 'instagram' | 'pin' | 'star' | 'quote'
 function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
@@ -187,7 +190,7 @@ function App() {
 
 <section className="section cream"><div className="container"><div className="section-head center reveal"><p className="eyebrow">ВОЗМОЖНО, ВЫ УЗНАЕТЕ СЕБЯ</p><h2>Переезд — это не просто<br/>перевезти коробки</h2><p>Знакомо?</p></div><div className="problem-grid">{problems.map((p,i) => <article className="problem-card reveal" key={p}><Icon name={(['heart','layers','pin','clock','home','chair','truck'] as IconName[])[i]}/><p>{p}</p></article>)}</div><p className="otherwise"><span>✦</span> А ведь можно иначе.</p></div></section>
 
-<section className="section services" id="services"><div className="container"><div className="section-head center reveal reveal-up"><p className="eyebrow">ПЕРЕЕЗД ОТ А ДО Я</p><h2>Мы сделаем переезд за вас</h2><p>Я, Ирина Лян, и моя команда организуем ваш переезд под ключ.<br/>Мы берём на себя весь процесс — от первого разбора вещей до порядка в новом доме.</p></div><div className="service-grid">{services.map(([title,text,icon],i) => <article className="service-card reveal reveal-up" style={{ transitionDelay: `${(i % 4) * 75}ms` }} key={title}><img src={serviceImages[i % serviceImages.length]} alt={title} className="service-photo" loading="lazy"/><div className="service-info"><span>0{i+1}</span><h3>{title}</h3><Icon name={icon as IconName}/><p>{text}</p></div></article>)}</div></div></section>
+<section className="section services" id="services"><div className="container"><div className="section-head center reveal reveal-up"><p className="eyebrow">ПЕРЕЕЗД ОТ А ДО Я</p><h2>Мы сделаем переезд за вас</h2><p>Я, Ирина Лян, и моя команда организуем ваш переезд под ключ.<br/>Мы берём на себя весь процесс — от первого разбора вещей до порядка в новом доме.</p></div><div className="service-grid">{services.map(([title,text,icon],i) => <article className="service-card reveal reveal-up" style={{ transitionDelay: `${(i % 4) * 75}ms` }} key={title}><img src={serviceImages[i]} alt={title} className="service-photo" loading="lazy"/><div className="service-info"><span>{i + 1}</span><h3>{title}</h3><Icon name={icon as IconName}/><p>{text}</p></div></article>)}</div></div></section>
 
 <section className="section process" id="process"><div className="container"><div className="section-head center reveal reveal-up"><p className="eyebrow">КАК ЭТО РАБОТАЕТ</p><h2>Шесть понятных шагов к новому дому</h2><p>Берём на себя организацию, а вы сохраняете время и спокойствие.</p></div><ol className="process-list">{processSteps.map(([number, title, description], index) => <li className="reveal reveal-scale" style={{ transitionDelay: `${(index % 3) * 75}ms` }} key={number}><span>{number}</span><div><h3>{title}</h3><p>{description}</p></div></li>)}</ol></div></section>
 
