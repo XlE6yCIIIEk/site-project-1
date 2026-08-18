@@ -15,4 +15,8 @@ html{scroll-behavior:auto}.nav,.nav:has(+ main:not(:first-child)){background:rgb
 .faq-answer>p{min-height:0;overflow:hidden;opacity:0;margin:0;padding:0 42px 0 2px;transition:opacity .18s ease,padding .32s cubic-bezier(.22,.68,.25,1)}
 .faq-item.is-open .faq-answer{grid-template-rows:1fr}
 .faq-item.is-open .faq-answer>p{opacity:1;padding-bottom:21px;transition-delay:.08s,0s}
-@media(prefers-reduced-motion:reduce){.faq-answer,.faq-answer>p{transition:none}}
+
+/* Tablet navigation: the desktop links no longer fit reliably below 900px. */
+@media(max-width:900px) and (min-width:641px){.nav-inner{padding:0 24px;gap:20px}.nav-links{display:none}.nav-links.is-open{position:absolute;top:76px;left:0;right:0;display:flex;flex-direction:column;align-items:flex-start;padding:23px 25px 27px;background:#151515;border-top:1px solid #333;gap:18px}.nav-links.is-open a{font-size:13px}.wa-nav{margin-left:auto}.menu{display:block;padding:5px}}
+/* Mobile: show complete cards instead of partially clipped horizontal carousels. */
+@media(max-width:640px){.process-list,.reviews-grid{display:grid;grid-template-columns:1fr;overflow:visible;margin:0;padding:0;gap:12px}.process-list li,.review-card{width:auto;min-width:0;flex:auto}.process-list li{min-height:0}.audience-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin:0;padding:0;gap:9px}.audience-row article{min-width:0;min-height:116px;flex:auto}.audience-row article:last-child{grid-column:span 2}}
