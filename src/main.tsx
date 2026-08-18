@@ -9,8 +9,9 @@ declare global { interface Window { turnstile?: { render: (container: HTMLElemen
 const WHATSAPP_NUMBER = '77077731752'
 const WHATSAPP_MESSAGE = 'Здравствуйте! Хочу переехать и обсудить с вами все детали.'
 const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
+const INSTAGRAM_URL = 'https://www.instagram.com/poryadok_s_irinoi/'
 
-type IconName = 'box' | 'spark' | 'truck' | 'chair' | 'heart' | 'clock' | 'home' | 'layers' | 'arrow' | 'check' | 'menu' | 'close' | 'whatsapp' | 'pin' | 'star' | 'quote'
+type IconName = 'box' | 'spark' | 'truck' | 'chair' | 'heart' | 'clock' | 'home' | 'layers' | 'arrow' | 'check' | 'menu' | 'close' | 'whatsapp' | 'instagram' | 'pin' | 'star' | 'quote'
 function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
     box: <><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></>,
@@ -26,6 +27,7 @@ function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
     menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
     close: <><path d="m5 5 14 14M19 5 5 19"/></>,
     whatsapp: <><path d="M20.5 11.8a8.5 8.5 0 0 1-12.7 7.4L3.5 20.5l1.3-4.1A8.5 8.5 0 1 1 20.5 11.8Z"/><path d="M8.4 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.7 1.7c.1.2.1.4 0 .6l-.5.7c.5 1 1.2 1.7 2.2 2.2l.7-.5c.2-.1.4-.1.6 0l1.7.7c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.4.2-1.2.4-2 .2-1-.3-2.4-1.1-3.7-2.4s-2.1-2.7-2.4-3.7c-.2-.8 0-1.6.2-2Z"/></>,
+    instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".8" fill="currentColor" stroke="none"/></>,
     pin: <><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2"/></>,
     star: <path d="m12 3 2.78 5.64 6.22.9-4.5 4.38 1.06 6.19L12 17.2l-5.56 2.91 1.06-6.19L3 9.54l6.22-.9L12 3Z"/>,
     quote: <path d="M9.5 8.5H6.7A2.7 2.7 0 0 0 4 11.2v2.1A2.7 2.7 0 0 0 6.7 16h.8v-2.8H6.2c0-1.1.6-1.8 1.8-1.8h1.5V8.5Zm8.5 0h-2.8a2.7 2.7 0 0 0-2.7 2.7v2.1a2.7 2.7 0 0 0 2.7 2.7h.8v-2.8h-1.3c0-1.1.6-1.8 1.8-1.8H18V8.5Z"/>
@@ -200,7 +202,7 @@ function App() {
 
 <section className="section final" id="contacts"><div className="container final-box"><div className="final-copy"><p className="eyebrow">ВАШ ПЕРЕЕЗД НАЧИНАЕТСЯ ЗДЕСЬ</p><h2>ПЕРЕЕЗД ПОД КЛЮЧ</h2><h3>Расхламим. Упакуем. Перевезём.<br/>Распакуем. Организуем.</h3><p>Оставьте заявку — мы свяжемся с вами и обсудим ваш переезд.</p></div><LeadForm hasConsent={consent === 'accepted'} onRequestConsent={() => setConsentDialogOpen(true)}/></div></section>
 
-<FAQ/></main><footer><div className="container footer-row"><a className="brand" href="#top"><span>Ирина Лян</span><small>ПЕРЕЕЗД ПОД КЛЮЧ</small></a><p>© 2026 Переезд под ключ. Все права защищены.</p><button type="button" className="privacy-link" onClick={() => setConsentDialogOpen(true)}>Конфиденциальность</button><a href={whatsappUrl} target="_blank" rel="noreferrer"><Icon name="whatsapp"/> +7 707 773 1752</a></div></footer></> }
+<FAQ/></main><footer><div className="container footer-row"><a className="brand" href="#top"><span>Ирина Лян</span><small>ПЕРЕЕЗД ПОД КЛЮЧ</small></a><p>© 2026 Переезд под ключ. Все права защищены.</p><button type="button" className="privacy-link" onClick={() => setConsentDialogOpen(true)}>Конфиденциальность</button><div className="footer-socials"><a href={INSTAGRAM_URL} target="_blank" rel="noreferrer"><Icon name="instagram"/> Instagram</a><a href={whatsappUrl} target="_blank" rel="noreferrer"><Icon name="whatsapp"/> +7 707 773 1752</a></div></div></footer></> }
 
 export default App
 
