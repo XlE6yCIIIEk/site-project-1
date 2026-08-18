@@ -5,6 +5,40 @@ const json = (body: Record<string, unknown>, status: number, origin?: string) =>
 const value = (item: unknown) => typeof item === 'string' ? item.trim() : ''
 const hash = async (input: string) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input)))].map(byte => byte.toString(16).padStart(2, '0')).join('')
 
+async function notifyManager(application: { order_number: number; name: string; phone: string; from_address: string; to_address: string; moving_date: string; volume: string | null; comment: string | null }) {
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID')
+  if (!botToken || !chatId) {
+    console.warn('Telegram notification is disabled: secrets are not configured.')
+    return false
+  }
+
+  const text = [
+    `🆕 Новая заявка №${application.order_number}`,
+    `👤 ${application.name}`,
+    `📞 ${application.phone}`,
+    `📦 ${application.from_address} → ${application.to_address}`,
+    `📅 ${application.moving_date}`,
+    application.volume ? `Объём: ${application.volume}` : '',
+    application.comment ? `Комментарий: ${application.comment}` : '',
+  ].filter(Boolean).join('\n')
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+      signal: AbortSignal.timeout(8_000),
+    })
+    const result = await response.json().catch(() => ({})) as { ok?: boolean; description?: string }
+    if (!response.ok || !result.ok) throw new Error(result.description || `Telegram HTTP ${response.status}`)
+    return true
+  } catch (error) {
+    console.error('Telegram notification failed:', error instanceof Error ? error.message : error)
+    return false
+  }
+}
+
 Deno.serve(async request => {
   const origin = request.headers.get('origin')
   const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN')
@@ -32,6 +66,8 @@ Deno.serve(async request => {
     const { data: allowed, error } = await supabase.rpc('consume_application_rate_limit', { p_bucket: await hash(bucket), p_max: 5, p_window_seconds: 900 })
     if (error || !allowed) return json({ error: 'Слишком много попыток. Попробуйте позднее.' }, 429, origin)
   }
-  const { error } = await supabase.from('applications').insert({ name, phone: `+${phone}`, from_address: fromAddress, to_address: toAddress, moving_date: movingDate, volume: volume || null, comment: comment || null, status: 'new' })
-  return error ? json({ error: 'Не удалось отправить заявку.' }, 500, origin) : json({ ok: true }, 201, origin)
+  const { data: application, error } = await supabase.from('applications').insert({ name, phone: `+${phone}`, from_address: fromAddress, to_address: toAddress, moving_date: movingDate, volume: volume || null, comment: comment || null, status: 'new' }).select('order_number, name, phone, from_address, to_address, moving_date, volume, comment').single()
+  if (error || !application) return json({ error: 'Не удалось отправить заявку.' }, 500, origin)
+  const notificationSent = await notifyManager(application)
+  return json({ ok: true, order_number: application.order_number, notification_sent: notificationSent }, 201, origin)
 })

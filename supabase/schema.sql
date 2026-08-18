@@ -1,8 +1,10 @@
 -- Run this script in Supabase Dashboard → SQL Editor.
 create extension if not exists pgcrypto;
+create sequence if not exists public.applications_order_number_seq start with 1001;
 
 create table if not exists public.applications (
   id uuid primary key default gen_random_uuid(),
+  order_number bigint not null unique default nextval('public.applications_order_number_seq'),
   created_at timestamptz not null default now(),
   name text not null,
   phone text not null,

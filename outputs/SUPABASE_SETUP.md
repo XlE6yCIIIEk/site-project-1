@@ -27,4 +27,4 @@ Production-сборка:
 npm run build
 ```
 
-Для Telegram-уведомлений в будущем удобно создать Supabase Database Webhook на `INSERT` в `applications`, который вызывает Edge Function. Токен бота храните в Secrets Edge Function, а не в Vite-переменных.`r`n
+Настройка Telegram-уведомлений описана в `outputs/TELEGRAM_SETUP.md`. Токен бота храните только в Supabase Edge Function Secrets, а не в Vite-переменных.

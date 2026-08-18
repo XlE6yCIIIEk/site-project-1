@@ -14,6 +14,7 @@ export type ApplicationStatus = 'new' | 'contacted' | 'in_progress' | 'completed
 
 export interface Application {
   id: string
+  order_number: number
   created_at: string
   name: string
   phone: string
